@@ -163,7 +163,7 @@ CREATE INDEX api_key_created_at IF NOT EXISTS FOR (a:ApiKey) ON (a.createdAt);
 CREATE INDEX trace_project_start_time IF NOT EXISTS FOR (t:Trace) ON (t.projectId, t.startTime);
 
 // Composite index for span filtering by trace and time
-CREATE INDEX span_trace_start_time IF NOT EXISTS FOR (s:Span) ON (s.traceId, t.startTime);
+CREATE INDEX span_trace_start_time IF NOT EXISTS FOR (s:Span) ON (s.traceId, s.startTime);
 
 // Composite index for project filtering by workspace and name
 CREATE INDEX project_workspace_name IF NOT EXISTS FOR (p:Project) ON (p.workspaceId, p.name);
