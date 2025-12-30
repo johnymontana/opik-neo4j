@@ -1,22 +1,31 @@
 name: opik
 
 services:
-  mysql:
-    image: mysql:8.4.2
+  neo4j:
+    image: neo4j:5.20.0
     pull_policy: always
-    hostname: mysql
+    hostname: neo4j
     environment:
-      MYSQL_ROOT_PASSWORD: opik
-      MYSQL_DATABASE: opik
-      MYSQL_USER: opik
-      MYSQL_PASSWORD: opik
+      NEO4J_AUTH: neo4j/password
+      NEO4J_server_memory_heap_max__size: 2G
+      NEO4J_server_memory_pagecache_size: 1G
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*
+      NEO4J_dbms_security_procedures_allowlist: apoc.*
+      # Enable APOC (optional but recommended for advanced operations)
+      NEO4J_PLUGINS: '["apoc"]'
+    ports:
+      - "7474:7474" # HTTP
+      - "7687:7687" # Bolt
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent" ]
-      timeout: 1s
-      interval: 1s
-      retries: 300
+      test: [ "CMD", "cypher-shell", "-u", "neo4j", "-p", "password", "MATCH (n) RETURN count(n) LIMIT 1" ]
+      timeout: 10s
+      interval: 5s
+      retries: 60
+      start_period: 30s
     volumes:
-      - mysql:/var/lib/mysql/:type=volume,source=~/opik/mysql
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+      - neo4j-import:/import
 
   redis:
     image: redis:7.2.4-alpine3.19
@@ -31,79 +40,6 @@ services:
       start_period: 30s
     volumes:
       - redis-data:/data
-
-  clickhouse-init:
-    image: alpine:latest
-    volumes:
-      - ./clickhouse_config:/clickhouse_config_files
-      - clickhouse-config:/config
-    command: |
-      sh -c "
-        cp -r /clickhouse_config_files/* /config/ && 
-        chown -R 1000:1000 /config
-      "
-  clickhouse:
-    image: clickhouse/clickhouse-server:25.3.6.56-alpine
-    pull_policy: always
-    hostname: clickhouse
-    environment:
-      CLICKHOUSE_DB: opik
-      CLICKHOUSE_USER: opik
-      CLICKHOUSE_PASSWORD: opik
-      # Enables SQL-driven Access Control and Account Management:
-      # https://clickhouse.com/docs/en/operations/access-rights#enabling-access-control
-      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
-    volumes:
-      - clickhouse:/var/lib/clickhouse/:type=volume,source=~/opik/clickhouse/data
-      - clickhouse-server:/var/log/clickhouse-server/:type=volume,source=~/opik/clickhouse/logs
-      - clickhouse-config:/etc/clickhouse-server/config.d
-    healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://127.0.0.1:8123/ping" ]
-      interval: 1s
-      timeout: 1s
-      retries: 300
-    ulimits:
-      nofile:
-        soft: 262144
-        hard: 262144
-    depends_on:
-      zookeeper:
-        condition: service_healthy
-      clickhouse-init:
-        condition: service_completed_successfully
-
-  zookeeper:
-    image: zookeeper:3.9.4
-    pull_policy: always
-    hostname: zookeeper
-    user: root
-    entrypoint:
-      - /bin/bash
-      - -c
-      - |
-        # Create data directory if it doesn't exist (for fresh installations)
-        # We use /bitnami/zookeeper/data path for compatibility with upgrades from Bitnami images
-        # Fresh installs need this directory created, while upgrades already have it with existing data
-        mkdir -p /bitnami/zookeeper/data
-        chown -R zookeeper:zookeeper /bitnami/zookeeper
-        # Run the original entrypoint as zookeeper user
-        exec gosu zookeeper /docker-entrypoint.sh zkServer.sh start-foreground
-    environment:
-      JVMFLAGS: "-Xmx512m"
-      ZOO_4LW_COMMANDS_WHITELIST: "srvr,ruok"
-      # Use Bitnami-compatible data directory for seamless migration from Bitnami images
-      # Both dataDir and dataLogDir point to the same location (Bitnami stored both together)
-      ZOO_DATA_DIR: /bitnami/zookeeper/data
-      ZOO_DATA_LOG_DIR: /bitnami/zookeeper/data
-    healthcheck:
-      test: [ "CMD-SHELL", "echo ruok | nc localhost 2181 | grep -q imok" ]
-      interval: 1s
-      timeout: 1s
-      retries: 300
-    volumes:
-      # Mount to /bitnami/zookeeper for compatibility with existing Bitnami installations
-      # Bitnami stored data at /bitnami/zookeeper/data, so ZOO_DATA_DIR points there
-      - zookeeper:/bitnami/zookeeper
 
   minio:
     image: minio/minio:RELEASE.2025-03-12T18-04-18Z
@@ -153,21 +89,13 @@ services:
       DOCKER_BUILDKIT: 1
       # Persistent anonymous installation ID passed from launcher script
       OPIK_ANONYMOUS_ID: ${OPIK_ANONYMOUS_ID:-}
-      STATE_DB_PROTOCOL: "jdbc:mysql://"
-      STATE_DB_URL: "mysql:3306/opik?createDatabaseIfNotExist=true&rewriteBatchedStatements=true"
-      STATE_DB_DATABASE_NAME: opik
-      STATE_DB_USER: opik
-      STATE_DB_PASS: opik
-      ANALYTICS_DB_MIGRATIONS_URL: "jdbc:clickhouse://clickhouse:8123"
-      ANALYTICS_DB_MIGRATIONS_USER: opik
-      ANALYTICS_DB_MIGRATIONS_PASS: opik
-      ANALYTICS_DB_PROTOCOL: "HTTP"
-      ANALYTICS_DB_HOST: "clickhouse"
-      ANALYTICS_DB_PORT: 8123
-      ANALYTICS_DB_DATABASE_NAME: opik
-      ANALYTICS_DB_USERNAME: opik
-      ANALYTICS_DB_PASS: opik
-      JAVA_OPTS: "-Dliquibase.propertySubstitutionEnabled=true -XX:+UseG1GC -XX:MaxRAMPercentage=80.0"
+      NEO4J_URI: "bolt://neo4j:7687"
+      NEO4J_USERNAME: "neo4j"
+      NEO4J_PASSWORD: "password"
+      NEO4J_DATABASE: "neo4j"
+      NEO4J_MAX_POOL_SIZE: 50
+      NEO4J_CONN_TIMEOUT: "60s"
+      JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=80.0"
       REDIS_URL: redis://:opik@redis:6379/
       OPIK_OTEL_SDK_ENABLED: false
       OTEL_VERSION: 2.16.0
@@ -197,9 +125,7 @@ services:
       retries: 600
       start_period: 1s
     depends_on:
-      mysql:
-        condition: service_healthy
-      clickhouse:
+      neo4j:
         condition: service_healthy
       minio:
         condition: service_healthy
@@ -387,10 +313,8 @@ networks:
   default:
 
 volumes:
-  clickhouse:
-  clickhouse-server:
-  clickhouse-config:
-  mysql:
-  zookeeper:
+  neo4j-data:
+  neo4j-logs:
+  neo4j-import:
   redis-data:
   minio-data:

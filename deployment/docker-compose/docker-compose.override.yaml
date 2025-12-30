@@ -1,20 +1,12 @@
 services:
-  mysql:
+  neo4j:
     ports:
-      - "3306:3306" # Exposing MySQL port to host
+      - "7474:7474" # Exposing Neo4j HTTP port to host
+      - "7687:7687" # Exposing Neo4j Bolt port to host
 
   redis:
     ports:
       - "6379:6379" # Exposing Redis port to host
-
-  clickhouse:
-    ports:
-      - "8123:8123" # Exposing ClickHouse HTTP port to host
-      - "9000:9000" # Exposing ClickHouse Native Protocol port to host
-
-  zookeeper:
-    ports:
-      - "2181:2181"
 
   minio:
     ports:

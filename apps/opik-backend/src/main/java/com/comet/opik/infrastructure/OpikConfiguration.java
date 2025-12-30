@@ -14,13 +14,7 @@ import lombok.ToString;
 public class OpikConfiguration extends JobConfiguration {
 
     @Valid @NotNull @JsonProperty
-    private DataSourceFactory database = new DataSourceFactory();
-
-    @Valid @NotNull @JsonProperty
-    private DataSourceFactory databaseAnalyticsMigrations = new DataSourceFactory();
-
-    @Valid @NotNull @JsonProperty
-    private DatabaseAnalyticsFactory databaseAnalytics = new DatabaseAnalyticsFactory();
+    private Neo4jConfiguration neo4jDatabase = new Neo4jConfiguration();
 
     @Valid @NotNull @JsonProperty
     private AuthenticationConfig authentication = new AuthenticationConfig();

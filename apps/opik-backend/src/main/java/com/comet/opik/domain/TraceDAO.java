@@ -75,7 +75,7 @@ import static com.comet.opik.utils.AsyncUtils.makeMonoContextAware;
 import static com.comet.opik.utils.template.TemplateUtils.getQueryItemPlaceHolder;
 import static java.util.function.Predicate.not;
 
-@ImplementedBy(TraceDAOImpl.class)
+@ImplementedBy(TraceDAONeo4jImpl.class)
 interface TraceDAO {
 
     Mono<UUID> insert(Trace trace, Connection connection);

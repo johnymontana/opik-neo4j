@@ -10,7 +10,7 @@ import com.comet.opik.infrastructure.aws.AwsModule;
 import com.comet.opik.infrastructure.bi.OpikGuiceyLifecycleEventListener;
 import com.comet.opik.infrastructure.bundle.LiquibaseBundle;
 import com.comet.opik.infrastructure.cache.CacheModule;
-import com.comet.opik.infrastructure.db.DatabaseAnalyticsModule;
+import com.comet.opik.infrastructure.db.DatabaseGraphModule;
 import com.comet.opik.infrastructure.db.IdGeneratorModule;
 import com.comet.opik.infrastructure.db.NameGeneratorModule;
 import com.comet.opik.infrastructure.events.EventListenerRegistrar;
@@ -56,8 +56,6 @@ import ru.vyarus.guicey.jdbi3.JdbiBundle;
 import java.math.BigDecimal;
 import java.time.Duration;
 
-import static com.comet.opik.infrastructure.bundle.LiquibaseBundle.DB_APP_ANALYTICS_MIGRATIONS_FILE_NAME;
-import static com.comet.opik.infrastructure.bundle.LiquibaseBundle.DB_APP_ANALYTICS_NAME;
 import static com.comet.opik.infrastructure.bundle.LiquibaseBundle.DB_APP_STATE_MIGRATIONS_FILE_NAME;
 import static com.comet.opik.infrastructure.bundle.LiquibaseBundle.DB_APP_STATE_NAME;
 
@@ -78,22 +76,9 @@ public class OpikApplication extends Application<OpikConfiguration> {
         var provider = new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(), substitutor);
         bootstrap.setConfigurationSourceProvider(provider);
         bootstrap.addBundle(new MultiPartBundle());
-        bootstrap.addBundle(LiquibaseBundle.builder()
-                .name(DB_APP_STATE_NAME)
-                .migrationsFileName(DB_APP_STATE_MIGRATIONS_FILE_NAME)
-                .dataSourceFactoryFunction(conf -> DatabaseUtils.filterProperties(conf.getDatabase()))
-                .build());
-        bootstrap.addBundle(LiquibaseBundle.builder()
-                .name(DB_APP_ANALYTICS_NAME)
-                .migrationsFileName(DB_APP_ANALYTICS_MIGRATIONS_FILE_NAME)
-                .dataSourceFactoryFunction(OpikConfiguration::getDatabaseAnalyticsMigrations)
-                .build());
+        // Neo4j doesn't use Liquibase migrations - schema is initialized via Cypher scripts
         bootstrap.addBundle(GuiceBundle.builder()
-                .bundles(JdbiBundle
-                        .<OpikConfiguration>forDatabase(
-                                (conf, env) -> DatabaseUtils.filterProperties(conf.getDatabase()))
-                        .withPlugins(new SqlObjectPlugin(), new Jackson2Plugin()))
-                .modules(new DatabaseAnalyticsModule(), new IdGeneratorModule(), new AuthModule(), new RedisModule(),
+                .modules(new DatabaseGraphModule(), new IdGeneratorModule(), new AuthModule(), new RedisModule(),
                         new RateLimitModule(), new NameGeneratorModule(), new HttpModule(), new EventModule(),
                         new ConfigurationModule(), new CacheModule(), new JobModule(), new AnthropicModule(),
                         new GeminiModule(), new OpenAIModule(), new OpenRouterModule(), new LlmModule(),

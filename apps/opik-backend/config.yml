@@ -12,80 +12,35 @@ logging:
     # Description: Set to DEBUG to see complete assembled LLM streaming responses (application-level logging)
     com.comet.opik.infrastructure.llm: ${LLM_PROXY_REQUEST_LOG_LEVEL:-INFO}
 
-# Description: state database configuration
-# https://www.dropwizard.io/en/stable/manual/configuration.html#database
-database:
-  #  Default: jdbc:mysql://localhost:3306/opik?createDatabaseIfNotExist=true&rewriteBatchedStatements=true
-  #  Description: The URL of the server
-  url: ${STATE_DB_PROTOCOL:-jdbc:mysql://}${STATE_DB_URL:-localhost:3306/opik?createDatabaseIfNotExist=true&rewriteBatchedStatements=true}
-  #  Default: opik
-  #  Description: The username used to connect to the server
-  user: ${STATE_DB_USER:-opik}
-  #  Default: opik
-  #  Description: The password used to connect to the server
-  password: ${STATE_DB_PASS:-opik}
-  #  Default: com.mysql.cj.jdbc.Driver
-  #  Description: The fully qualified class name of the JDBC driver class.
-  #   Only required if there were no JDBC drivers registered in META-INF/services/java.sql.Driver.
-  driverClass: ${STATE_DB_DRIVER_CLASS:-com.mysql.cj.jdbc.Driver}
-  #  Default: Empty
-  #  Description: Any additional JDBC driver parameters
-  properties:
-    wrapperPlugins: ${STATE_DB_PLUGINS:-''}
-    useSSL: ${MYSQL_USE_SSL:-''}
-    requireSSL: ${MYSQL_REQUIRE_SSL:-''}
-    verifyServerCertificate: ${MYSQL_VERIFY_SSL:-''}
-    trustCertificateKeyStoreUrl: ${MYSQL_TRUSTSTORE_URL:-''}
-    trustCertificateKeyStorePassword: ${MYSQL_TRUSTSTORE_PASSWORD:-''}
-    trustCertificateKeyStoreType: ${MYSQL_TRUSTSTORE_TYPE:-''}
-    clientCertificateKeyStoreUrl: ${MYSQL_CLIENTSTORE_URL:-''}
-    clientCertificateKeyStorePassword: ${MYSQL_CLIENTSTORE_PASSWORD:-''}
-    clientCertificateKeyStoreType: ${MYSQL_CLIENTSTORE_TYPE:-''}
-
-# Description: analytics database configuration for migrations connection
-databaseAnalyticsMigrations:
-  #  Default: jdbc:clickhouse://localhost:8123/opik
-  #  Description: The URL of the server
-  url: ${ANALYTICS_DB_MIGRATIONS_URL:-jdbc:clickhouse://localhost:8123/opik}
-  #  Default: opik
-  #  Description: The username used to connect to the server
-  user: ${ANALYTICS_DB_MIGRATIONS_USER:-opik}
-  #  Default: opik
-  #  Description: The password used to connect to the server
-  password: ${ANALYTICS_DB_MIGRATIONS_PASS:-opik}
-  #  Default: ru.yandex.clickhouse.ClickHouseDriver
-  #  Description: The fully qualified class name of the JDBC driver class.
-  #   Community support only. Requires an old driver for migrations to work
-  driverClass: ru.yandex.clickhouse.ClickHouseDriver
-
-# Description: analytics database configuration for service connection
-databaseAnalytics:
-  #  Default: http
-  #  Description: The protocol used to connect to the server
-  protocol: ${ANALYTICS_DB_PROTOCOL:-HTTP}
-  #  Default: localhost
-  #  Description: The host used to connect to the server
-  host: ${ANALYTICS_DB_HOST:-localhost}
-  #  Default: 8123
-  #  Description: The port used to connect to the server
-  port: ${ANALYTICS_DB_PORT:-8123}
-  #  Default: opik
-  #  Description: The username used to connect to the server
-  username: ${ANALYTICS_DB_USERNAME:-opik}
-  #  Default: opik
-  #  Description: The password used to connect to the server
-  password: ${ANALYTICS_DB_PASS:-opik}
-  #  Default: opik
-  #  Description: The database name
-  databaseName: ${ANALYTICS_DB_DATABASE_NAME:-opik}
-  #  Default:
-  #   - health_check_interval=2000
-  #   - compress=1
-  #   - auto_discovery=true
-  #   - failover=3
-  #   - custom_http_params=max_query_size=100000000
-  #  Description: query parameters that will be added to the connection string
-  queryParameters: ${ANALYTICS_DB_QUERY_PARAMETERS:-health_check_interval=2000&compress=1&auto_discovery=true&failover=3&custom_http_params=max_query_size=100000000,async_insert_busy_timeout_max_ms=250,async_insert_busy_timeout_min_ms=100,async_insert=1,wait_for_async_insert=1,async_insert_use_adaptive_busy_timeout=1,async_insert_deduplicate=1}
+# Description: Neo4j database configuration (unified state and analytics database)
+neo4jDatabase:
+  #  Default: bolt://localhost:7687
+  #  Description: The Neo4j connection URI (bolt:// for single instance, neo4j:// for cluster)
+  uri: ${NEO4J_URI:-bolt://localhost:7687}
+  #  Default: neo4j
+  #  Description: The username used to connect to Neo4j
+  username: ${NEO4J_USERNAME:-neo4j}
+  #  Default: password
+  #  Description: The password used to connect to Neo4j
+  password: ${NEO4J_PASSWORD:-password}
+  #  Default: neo4j
+  #  Description: The database name (default database is 'neo4j')
+  database: ${NEO4J_DATABASE:-neo4j}
+  #  Default: 50
+  #  Description: Maximum number of connections in the connection pool
+  maxConnectionPoolSize: ${NEO4J_MAX_POOL_SIZE:-50}
+  #  Default: 60s
+  #  Description: Maximum time to wait for a connection from the pool
+  connectionAcquisitionTimeout: ${NEO4J_CONN_TIMEOUT:-60s}
+  #  Default: 30s
+  #  Description: Maximum time a connection can be idle before being closed
+  maxConnectionLifetime: ${NEO4J_MAX_CONN_LIFETIME:-3600s}
+  #  Default: false
+  #  Description: Whether to use encrypted connection (TLS/SSL)
+  encrypted: ${NEO4J_ENCRYPTED:-false}
+  #  Default: REQUIRED
+  #  Description: Trust strategy for encrypted connections (TRUST_ALL_CERTIFICATES, TRUST_SYSTEM_CA_SIGNED_CERTIFICATES)
+  trustStrategy: ${NEO4J_TRUST_STRATEGY:-TRUST_ALL_CERTIFICATES}
 
 # https://www.dropwizard.io/en/stable/manual/configuration.html#health
 health:
@@ -98,16 +53,10 @@ health:
     - name: deadlocks
       critical: true
       type: alive
-    - name: db
-      critical: true
-      type: ready
     - name: redis
       critical: true
       type: ready
-    - name: clickhouse
-      critical: true
-      type: ready
-    - name: mysql
+    - name: neo4j
       critical: true
       type: ready
 
