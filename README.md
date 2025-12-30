@@ -115,7 +115,7 @@ It includes:
 
 **Current Status**: Foundation complete, ~70% of DAOs remaining
 
-See [NEO4J_ROADMAP.md](NEO4J_ROADMAP.md) for detailed implementation plan.
+See [docs/NEO4J_ROADMAP.md](docs/NEO4J_ROADMAP.md) for detailed implementation plan.
 
 ## 🏗️ Architecture
 
@@ -154,7 +154,7 @@ See [NEO4J_ROADMAP.md](NEO4J_ROADMAP.md) for detailed implementation plan.
 
 ## 📖 Documentation
 
-- **[NEO4J_INTEGRATION.md](NEO4J_INTEGRATION.md)** - Complete integration guide
+- **[docs/NEO4J_INTEGRATION.md](docs/NEO4J_INTEGRATION.md)** - Complete integration guide
   - Architecture overview
   - Graph data model
   - Configuration details
@@ -162,14 +162,14 @@ See [NEO4J_ROADMAP.md](NEO4J_ROADMAP.md) for detailed implementation plan.
   - Performance tuning
   - Migration strategy
 
-- **[NEO4J_ROADMAP.md](NEO4J_ROADMAP.md)** - Implementation roadmap
+- **[docs/NEO4J_ROADMAP.md](docs/NEO4J_ROADMAP.md)** - Implementation roadmap
   - Remaining work breakdown
   - Priority levels
   - Implementation patterns
   - Testing strategy
   - Timeline estimates
 
-- **[NEO4J_STATUS.md](NEO4J_STATUS.md)** - Current status
+- **[docs/NEO4J_STATUS.md](docs/NEO4J_STATUS.md)** - Current status
   - Completed work
   - Known issues
   - Files created/modified
@@ -271,7 +271,7 @@ public interface WorkspaceDAO {
 
 4. **Add tests**
 
-See [NEO4J_ROADMAP.md](NEO4J_ROADMAP.md) for detailed patterns and examples.
+See [docs/NEO4J_ROADMAP.md](docs/NEO4J_ROADMAP.md) for detailed patterns and examples.
 
 ## 🐛 Troubleshooting
 
@@ -342,7 +342,7 @@ RETURN w.name, p.name, count(t) as traceCount;
 
 To contribute to completing the integration:
 
-1. Review [NEO4J_ROADMAP.md](NEO4J_ROADMAP.md) for available work
+1. Review [docs/NEO4J_ROADMAP.md](docs/NEO4J_ROADMAP.md) for available work
 2. Pick a DAO from Priority 1, 2, or 3
 3. Follow the implementation pattern
 4. Add comprehensive tests
